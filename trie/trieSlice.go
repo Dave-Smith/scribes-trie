@@ -2,19 +2,18 @@ package trie
 
 import (
 	"bytes"
-	// "github.com/dave-smith/trie-prefix/timing"
 )
 
 func (t *Trie) FastFromPrefix(prefix []byte) []string {
-	// defer timing.Duration(timing.Track("fast prefix"))
 	prefix = cleanWord(prefix)
 	start := t.root.FastFindNode(prefix)
+	if start == nil {
+		return []string{}
+	}
 	return fastGetWords(start, prefix[:len(prefix)-1], t.maxDepth-len(prefix))
 }
 
 func (t *Trie) Suggestions(prefix []byte) []string {
-	// defer timing.Duration(timing.Track("Suggestions"))
-	// fmt.Printf("Getting suggestions for %s\n", prefix)
 	prefix = cleanWord(prefix)
 	start := t.root.FastFindNode(prefix)
 	return fastGetWords(start, prefix[:len(prefix)-1], 2)
@@ -33,8 +32,7 @@ func (n *Node) FastFindNode(prefix []byte) *Node {
 		}
 	}
 
-	node := NewNode(r)
-	return &node
+	return nil
 }
 
 func (trie *Trie) FastInsertWord(word []byte) {
@@ -60,22 +58,18 @@ func (n *Node) fastInsert(word []byte) {
 	}
 
 	c := word[0]
-	var next *Node
 	children := n.children
 	for i := 0; i < len(children); i++ {
 		if children[i].c == c {
-			next = children[i]
-			break
+			children[i].fastInsert(word[1:])
+			return
 		}
 	}
 
-	if next == nil {
-		nn := NewNode(c)
-		next = &nn
-		n.children = append(n.children, next)
-	}
+	next := NewNode(c)
+	n.children = append(n.children, &next)
 
-	next.fastInsert(word[1:])
+	(&next).fastInsert(word[1:])
 }
 func getSuggestions(node *Node, prefix []byte, depth int) []string {
 	word := append(prefix, node.c)
@@ -114,5 +108,14 @@ func fastGetWords(node *Node, prefix []byte, depth int) []string {
 }
 
 func cleanWord(word []byte) []byte {
-	return bytes.ToLower(bytes.Trim(word, " \n\r"))
+	trimmed := bytes.Trim(word, " \n\r")
+
+	// lowercasing
+	// for i := range trimmed {
+	// 	if trimmed[i] >= 'A' && trimmed[i] <= 'Z' {
+	// 		trimmed[i] += 32
+	// 	}
+	// }
+	// return trimmed
+	return bytes.ToLower(trimmed)
 }

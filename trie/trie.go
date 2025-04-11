@@ -18,7 +18,6 @@ func NewTrie() Trie {
 
 func NewNode(c byte) Node {
 	var children []*Node = []*Node{}
-	// var children []*Node = make([]*Node, 0, 50)
 	return Node{c, children, false}
 }
 

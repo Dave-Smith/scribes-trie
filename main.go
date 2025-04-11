@@ -12,7 +12,7 @@ import (
 
 func main() {
 	fmt.Println("Type ':q' to exit")
-	t, _ := constructTrie()
+	t, _ := fastConstructTrie()
 	// t, _ := fastConstructTrie()
 
 	reader := bufio.NewReader(os.Stdin)
@@ -33,9 +33,15 @@ func main() {
 		// words2 = t2.FromPrefix(string(text))
 		words := []string{}
 		if text[len(text)-1] == '?' {
-			words = t.Suggestions(text[:len(text)-1])
+			func() {
+				defer timing.Duration(timing.Track("Suggestion"))
+				words = t.Suggestions(text[:len(text)-1])
+			}()
 		} else {
-			words = t.FastFromPrefix(text)
+			func() {
+				defer timing.Duration(timing.Track("Find All"))
+				words = t.FastFromPrefix(text)
+			}()
 		}
 		// words := t.FastFromPrefix(text)
 		// words = t.FastFromPrefix(text)
@@ -72,28 +78,6 @@ func fastConstructTrie() (trie.Trie, error) {
 		t.FastInsertWord(word)
 		words++
 		word = []byte{}
-	}
-
-	fmt.Printf("Constructed the prefix trie with %d words\n", words)
-
-	return t, nil
-}
-
-func constructTrie() (trie.Trie, error) {
-	defer timing.Duration(timing.Track("regular construct trie"))
-	file, err := os.Open("words.txt")
-	words := 0
-	var t trie.Trie
-	if err != nil {
-		return t, err
-	}
-	defer file.Close()
-	t = trie.NewTrie()
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		t.InsertWord(scanner.Text())
-		words++
 	}
 
 	fmt.Printf("Constructed the prefix trie with %d words\n", words)

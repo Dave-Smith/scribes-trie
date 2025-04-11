@@ -2,32 +2,10 @@ package trie
 
 import (
 	"bufio"
+	"bytes"
 	"os"
 	"testing"
 )
-
-var wordsAsString = []string{
-	"help",
-	"hi",
-	"hip",
-	"hint",
-	"hints",
-	"helpful",
-	"helps",
-	"and",
-	"an",
-	"ant",
-	"ants",
-	"aunt",
-	"aunts",
-	"aunty",
-	"get",
-	"gets",
-	"go",
-	"got",
-	"goth",
-}
-var wordsAsByteSlice = fromString(wordsAsString)
 
 func fromString(words []string) [][]byte {
 	b := [][]byte{}
@@ -44,36 +22,29 @@ func BenchmarkInsertBytes(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertStrings(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		t := NewTrie()
-		t.InsertWords(words)
-	}
-}
-
 func BenchmarkFindBytes(b *testing.B) {
 	t := NewTrie()
-	t.InsertWords(words)
+	t.FastInsertWords(wordBytes)
 	word := []byte("help")
 	for i := 0; i < b.N; i++ {
 		t.FastFromPrefix(word)
 	}
 }
 
-func BenchmarkFindString(b *testing.B) {
-	t := NewTrie()
-	t.InsertWords(words)
-	word := "help"
+func BenchmarkToLower(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		t.FromPrefix(word)
+		for _, w := range bytesLower {
+			bytes.ToUpper(w)
+		}
 	}
 }
 
 var words []string
 var wordBytes [][]byte
+var bytesLower [][]byte
 
 func init() {
-	file, _ := os.Open("words.txt")
+	file, _ := os.Open("words-upper.txt")
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanBytes)
@@ -88,4 +59,10 @@ func init() {
 		words = append(words, string(word))
 		word = []byte{}
 	}
+
+	for _, w := range wordsLower {
+		bytesLower = append(bytesLower, []byte(w))
+	}
 }
+
+var wordsLower []string = []string{"append", "bytes", "words", "word", "scanner", "open", "defer", "string", "if", "split", "file", "init", "continue", "scan"}
